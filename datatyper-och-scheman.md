@@ -107,6 +107,7 @@ Verksamheten fyller i `valid_from` i Excel. `valid_to` räknas ut av dbt som dag
 | --- | --- | --- | --- | --- |
 | Referensdata | `ref` | `ref_` | `ref_fuel_type` | Excel via referensdataflödet |
 | Affärsmappning | `ref` | `ref_` | `ref_queue_cost_center` | Excel via referensdataflödet |
+| Exkluderingslista | `ref` | `ref_excluded_` | `ref_excluded_customer` | Excel via referensdataflödet. Tekniska listor utan personuppgifter kan vara en dbt (data build tool) seed |
 | Hierarki | `ref` | `ref_` | `ref_cost_center_hierarchy` | Excel via referensdataflödet |
 | Xref, manuell | `xref` | `xref_` | `xref_cost_center` | Excel via referensdataflödet |
 | Xref, genererad | `xref` | `xref_` | `xref_customer` | dbt-modell som matchar på organisationsnummer, personnummer, regnr eller VIN (Vehicle identification number) |

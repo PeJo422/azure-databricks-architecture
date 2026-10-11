@@ -56,6 +56,8 @@ Gäller målarkitekturen med alternativ C: två subscriptions, tre workspaces, e
 
 ### Don't
 - Hårdkoda inte katalognamn i modellerna. Använd `target.catalog` eller `{{ ref() }}`.
+- Räkna inte upp värden eller id i `where` eller `case`. Lägg dem i en referenstabell med ägare och orsak, och joina mot den.
+- Använd inte `current_date()`, `distinct` eller `limit 1` för att få en modell att fungera. Samma indata ska ge samma utdata vid varje körning.
 - Kör inte dbt mot produktion från en utvecklares dator.
 - Låt inte CI läsa produktionsdata om den innehåller personuppgifter. Låt `--state` peka på testkörningens artefakter.
 

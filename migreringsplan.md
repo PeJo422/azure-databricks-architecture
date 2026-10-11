@@ -44,7 +44,7 @@ Ordningen mellan områdena följer färdplanen i dataplanen. Faserna har ingång
 - Facit: nyckelrapporternas utdata per månad, sparade som tabeller.
 - Regelkatalog: affärsregler utlästa ur gammal kod, med regel, källa, ägare och status.
 - En dataägare per område.
-- Lista över hårdkodade rättelser ("om kund X då värde Y"), som flyttas till referensdata.
+- Inventering av hårdkodad logik: listor över värden eller id i `where` och `case`, enstaka rättelser ("om kund X då värde Y"), konstanter med affärsbetydelse och tidsberoende funktioner som `current_date`. Varje fynd sorteras som lista, regel, rättelse eller konstant, och listor, rättelser och konstanter flyttas till referensdata med en namngiven ägare enligt [`datamodellering.md`](datamodellering.md), avsnitt 10.
 
 **Klart när** högarna är godkända av dataägarna, facit finns för områdets rapporter och regelkatalogen är genomläst av någon i verksamheten.
 
@@ -71,7 +71,7 @@ Första området är lagerbilar enligt dataplanen. Det tar längst eftersom det 
 - Parallellkörning mot det gamla, med avstämning.
 - Rapporterna för området flyttade, antingen via kompatibilitetsvy eller direkt mot en ny semantisk modell.
 
-**Klart när** avstämningen är godkänd av dataägaren över minst ett månadsskifte, rapporterna läser från den nya plattformen och det gamla är satt till skrivskyddat.
+**Klart när** avstämningen är godkänd av dataägaren över minst ett månadsskifte, rapporterna läser från den nya plattformen, det gamla är satt till skrivskyddat och de nya modellerna saknar hårdkodade listor och godkänns av kontrollen i pull request.
 
 ### Fas 3: Resterande områden
 
@@ -116,6 +116,7 @@ Rapporterna flyttas sist inom varje område.
 
 - **Inget nytt i det gamla** från ett fastställt datum. Nya behov byggs på den nya plattformen, och det gamla får bara felrättningar.
 - **Ingen refaktorering i det gamla.** En databas utan tester ger regressioner när den städas, och tiden behövs för det nya.
+- **Ingen hårdkodad lista i ny kod.** Listor över värden, id och rättelser ligger i referensdata med ägare. Modeller ska vara deterministiska, och kontrollen i pull request stoppar det som inte är det.
 - **Inget område utan dataägare.** Ägaren godkänner högarna, avstämningen och slutdatumet.
 - **Ingen omdesign under avstämning.** Ändringar av affärsregler sker efter att den gamla siffran är återskapad och förklarad.
 
@@ -142,6 +143,7 @@ Det gamla lever till avstämningen är godkänd och slutdatumet är passerat. Om
 | Parallellkörning kostar dubbelt | Budgeten överskrids | Parallellkörningen begränsas till ett område i taget och stängs av vid godkänd avstämning |
 | Gamla siffror visar sig vara fel | Förtroendekris hos verksamheten | Dataägaren involveras från fas 0, och avvikelser redovisas med orsak |
 | Mekanisk översättning av dbt (data build tool)-modeller tar längre tid än beräknat | Fas 2 försenas | Hög två innehåller bara objekt med lågt värde. Volymen mäts i fas 0 |
+| Listor flyttas ut ur koden utan att någon äger dem | Listorna blir föråldrade och ger fel siffror | Varje lista får en ägare, en orsak per rad och ett test som varnar för poster som aldrig matchar |
 | Nycklar mellan system är instabila | Rapporterna ändras när matchningen förbättras | Nycklar tilldelas en gång och sparas, enligt datamodellen |
 | Rapporter byggs om en gång för mycket | Rapportägarna tröttnar | Kompatibilitetsvyer gör att rapporten flyttas en gång och förbättras senare |
 

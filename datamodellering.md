@@ -186,7 +186,118 @@ models/
 
 Teststrukturen för referensdata finns i [`datatyper-och-scheman.md`](datatyper-och-scheman.md).
 
-## 10. Regler för modelleringen
+## 10. Hårdkodad logik och determinism
+
+Två krav gäller för all kod i plattformen:
+
+1. Data som styr vilka rader som tas med, hur värden översätts eller vilka poster som rättas ligger i tabeller med ägare, orsak och giltighetsperiod. Det ligger inte i SQL (Structured query language).
+2. Samma indata ger samma utdata, vid varje körning och i alla miljöer.
+
+### Lista eller regel
+
+En sats får stå i koden när den uttrycker en regel över attribut eller intervall. En sats som räknar upp värden, id eller namn är data och flyttas ut.
+
+| Mönster | Exempel | Bedömning | Åtgärd |
+| --- | --- | --- | --- |
+| Regel över attribut | `case when amount < 0 then 'credit' else 'debit' end` | Logik | Står kvar, med dokumenterad regel och test |
+| Teknisk hantering | `cast`, `trim`, `coalesce` för känd nullhantering | Logik | Står kvar i staging |
+| Uppräkning av värden | `where status not in ('A', 'B', 'C')` | Data | Referenstabell och anti-join |
+| Uppräkning av poster | `where customer_id not in (1001, 1002, 1003)` | Data | Exkluderingslista med orsak och ägare |
+| Värdeöversättning | `case when code = 'X' then 'New' when code = 'Y' then 'Used' end` | Data | `ref_`-tabell och join |
+| Enstaka rättelse | `case when id = 4711 then 'cost center X' else cost_center end` | Data | Manuell rättelse i referensdata, med orsak och giltighet |
+| Konstant med affärsbetydelse | Tröskel på 90 dagar, skattesats, startår i ett filter | Data | Referensdata med giltighetsperiod |
+| Teknisk konstant | Första datum som data ska läsas från | Konfiguration | `var` i dbt (data build tool) |
+
+### Var listorna ska ligga
+
+| | dbt (data build tool) seed | Referensdataflödet | `var` i dbt (data build tool) |
+| --- | --- | --- | --- |
+| Vem ändrar | Utvecklare | Verksamheten | Utvecklare |
+| Ändringsväg | Pull request och automatiska tester | Validering, `dbt test` i test och godkännande av dataägaren | Pull request |
+| Versionshistorik | Git | Kontrolltabell med version och godkännande | Git |
+| Storlek | Upp till några hundra rader | Hundratals filer, valfri storlek | Enstaka värden |
+| Innehåll | Tekniska och opersonliga listor | Verksamhetens listor och allt som pekar ut personer, kunder, fordon eller anställda | Tekniska konstanter |
+
+**Bedömning:** standardvalet är referensdataflödet. En seed används bara när alla fyra villkor gäller:
+
+- listan ägs av utvecklarna,
+- den innehåller inga personuppgifter och inga id som pekar ut kunder, fordon eller anställda,
+- den ändras sällan,
+- ingen utanför teamet behöver granska ändringarna.
+
+En seed ligger i Git, och en rad som en gång checkats in finns kvar i historiken även när den tas bort. Repot kan dessutom vara publikt. Listor över kund- eller fordonsnummer hör därför hemma i referensdataflödet. Dokumentationen för dbt (data build tool) beskriver seeds som lämpade för statisk data som sällan ändras, med en lista över testkonton att utesluta som exempel, och avråder från seeds för data som innehåller personuppgifter.
+
+### Filter som anti-join, med karantän
+
+Före:
+
+```sql
+select *
+from {{ ref('stg_source_a__orders') }}
+where customer_id not in (1001, 1002, 1003)
+  and order_type <> 'TEST'
+```
+
+Efter:
+
+```sql
+select o.*
+from {{ ref('stg_source_a__orders') }} as o
+left join {{ ref('ref_excluded_customer') }} as x
+  on  o.customer_id = x.customer_id
+  and o.order_date >= x.valid_from
+  and o.order_date <  x.valid_to
+where x.customer_id is null
+```
+
+Raderna som filtreras bort sparas i en karantänmodell med orsaken, `stg_source_a__orders_excluded`, så att det alltid går att se vad som uteslutits och varför. Ett gemensamt makro (`exclude_by_list`) ger alla modeller samma mönster.
+
+Listan har tre fält utöver nyckeln: `reason`, `owner` och `valid_from`. Giltighetens slut räknas ut av dbt (data build tool), på samma sätt som för övrig referensdata.
+
+Tester som hör till mönstret:
+
+- Antalet uteslutna rader per orsak jämförs mot föregående körning, och en kraftig ändring varnar.
+- Poster i listan som aldrig matchar någon rad varnar, eftersom de är kvarlevor.
+- Raden i karantänen och raden i huvudmodellen summerar till radantalet i staging.
+
+### Översättningar och rättelser
+
+En `case`-sats med en avslutande `else` som tilldelar ett affärsvärde klassificerar varje nytt värde fel, utan att något syns. Nya koder i källsystemet hamnar då i fel kategori och tas först upp när en siffra inte stämmer.
+
+Översättningar görs i stället med en join mot en `ref_`-tabell. Värden som saknar rad får `Okänd`, och ett test varnar med en lista över de värden som saknar mappning. Dataägaren får listan och lägger till raden i referensdataflödet.
+
+Enstaka rättelser ("om kund 4711 då kostnadsställe X") läggs i referensdata med orsak och giltighetsperiod. Då går det att se när en rättelse kom till, varför och vem som beslutade, och att ta bort den när källan har rättats.
+
+### Determinism
+
+En modell är deterministisk när samma indata ger samma utdata oavsett när körningen sker, i vilken ordning raderna läses och hur många noder som körs. En körning som upprepas ger då samma resultat. Följande mönster bryter mot det.
+
+| Mönster | Varför det ger olika resultat | Gör så här |
+| --- | --- | --- |
+| `current_date()`, `current_timestamp()` eller `getdate()` i affärslogik | Resultatet beror på när körningen sker, och en omkörning av en gammal dag ger ett annat svar | Skicka in datumet som variabel (`var('data_date')`) eller läs det ur datan. Tekniska tidsstämplar som `_loaded_at` är undantaget |
+| `row_number()` eller `rank()` med en `order by` som inte är unik | Vid lika värden väljs en godtycklig rad | Lägg till en nyckel som bryter oavgjort, till exempel källnyckel och `_loaded_at` |
+| `limit 1`, `top 1` eller `first()` utan fullständig sortering | Samma problem | Samma åtgärd |
+| `distinct` för att dölja dubbletter | Vilken av två nästan lika rader som behålls är slumpmässigt, och dubbletterna visar att nivån är fel | Hitta orsaken, deklarera nivån och testa att nyckeln är unik |
+| `rand()`, `uuid()` eller `monotonically_increasing_id()` som nyckel | Nyckeln byts vid varje körning | Hash av affärsnyckel eller sparad nyckel (avsnitt 3) |
+| Inkrementell laddning som läser från senaste tidsstämpel i målet | Rader som kommer sent tappas, och en omkörning ger ett annat resultat | Överlappande fönster och `merge` på en unik nyckel |
+| Belopp som `double` | Summeringsordningen varierar mellan körningar, och avvikelserna syns i decimalerna | `decimal` med fast skala för alla belopp |
+| `select *` i staging och integration | En ny kolumn i källan ändrar modellen utan att någon har beslutat det | Explicit kolumnlista |
+| Beroende av vilken tabell som laddats först | Resultatet beror på körningens ordning | Explicit `ref()` och färskhetskrav i `sources` |
+
+Ett test kör varje modell två gånger mot samma indata i CI (Continuous integration) och jämför radantal och kontrollsumma. Skiljer de sig åt är modellen inte deterministisk.
+
+### Kontroll i pull request
+
+En automatisk kontroll i CI (Continuous integration) stoppar en pull request som innehåller något av följande i en modell:
+
+- `in (...)` eller `not in (...)` med fem eller fler literala värden,
+- `case` med fyra eller fler grenar som jämför mot literala värden,
+- `current_date`, `current_timestamp`, `getdate`, `rand` eller `uuid` utanför staging,
+- `distinct` eller `limit 1` utan en kommentar `-- allow: <orsak>`.
+
+Ett undantag kräver en kommentar med orsak, och granskaren avgör om den håller. Kontrollen börjar som en enkel textsökning och kan senare bli en regel i en linter för SQL (Structured query language).
+
+## 11. Regler för modelleringen
 
 **Gör**
 
@@ -200,12 +311,14 @@ Teststrukturen för referensdata finns i [`datatyper-och-scheman.md`](datatyper-
 
 - Lägg inte affärslogik i staging eller i rapportlagret.
 - Joina inte mellan källor i staging.
-- Hårdkoda inte rättelser för enskilda poster i SQL (Structured query language).
+- Hårdkoda inte listor över värden, id eller rättelser i SQL (Structured query language). Se avsnitt 10.
+- Skriv inte en `else` som tilldelar ett affärsvärde. Värden som saknar mappning får `Okänd` och ett varnande test.
+- Använd inte `current_date()`, `distinct` eller `limit 1` för att få en modell att fungera.
 - Skapa inte många-till-många-relationer utan en bro.
 - Räkna inte om nycklar för matchade entiteter varje körning.
 - Låt inte Power BI (Business intelligence) läsa från `staging`, `integration`, `ref` eller `xref`.
 
-## 11. Öppna punkter
+## 12. Öppna punkter
 
 - **Prioritet per attribut.** Dataägarna behöver bestämma vilket källsystem som gäller för varje attribut när källorna skiljer sig, till exempel modellbeteckning eller färg. Utan beslut väljs senast uppdaterade värde, vilket ger ett resultat som växlar.
 - **VIN (Vehicle identification number)-kvalitet.** Andelen poster utan giltigt VIN (Vehicle identification number) är oklar före inventeringen i migreringens fas 0 och avgör hur viktig registreringsnummer-matchningen blir.
@@ -217,15 +330,19 @@ Teststrukturen för referensdata finns i [`datatyper-och-scheman.md`](datatyper-
 
 | Begrepp | Förklaring |
 | --- | --- |
+| Anti-join | En join som behåller raderna som saknar träff i en annan tabell. Används för att filtrera bort rader enligt en lista. |
 | Bro | Tabell som kopplar två entiteter där flera poster på ena sidan hör till flera på andra. |
+| Determinism | Egenskapen att samma indata alltid ger samma utdata, oavsett när och hur körningen sker. |
 | Dimension | Tabell som beskriver något man analyserar efter, till exempel fordon, anläggning eller datum. |
 | Entitet | En verklig sak som verksamheten håller reda på, till exempel ett fordon eller en anläggning. |
 | Fakta | Tabell med händelser och mått, till exempel försäljning eller lagerbilar per dag. |
 | Integrationslager | Lagret där poster från flera källsystem förenas till en rad per verklig entitet. |
+| Karantän | Tabell som sparar rader som filtrerats bort, med orsak, så att det går att se vad som uteslutits. |
 | Konformerad dimension | En dimension som är densamma för alla områden som använder den. |
 | Matchning | Att avgöra att två poster i olika system beskriver samma sak. |
 | Nivå (grain) | Vad en rad i en tabell står för, till exempel ett fordon eller ett fordon per dag. |
 | SCD (Slowly changing dimension) | Sätt att hantera attribut som ändras över tid: skriva över (typ 1) eller spara en ny rad per version (typ 2). |
+| Seed | CSV-fil i Git som dbt (data build tool) läser in som en liten tabell. Passar sällan ändrade, tekniska listor utan personuppgifter. |
 | Survivorship | Regeln som väljer vilket värde som gäller när flera källor har olika värden för samma attribut. |
 | VIN (Vehicle identification number) | Fordonets unika chassinummer. |
 | Xref (cross reference, korsreferens) | Tabell som kopplar ett källsystems id till entitetens gemensamma nyckel. |
