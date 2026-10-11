@@ -38,7 +38,6 @@ Valet av C bygger på två delar. Tre workspaces (utveckling, test och produktio
 
 **Risker med enklare alternativ.** En enda subscription ger gemensam gräns för RBAC (Role-based access control) och policy, så en felaktig rolltilldelning når produktion. Tre subscriptions ger starkast separation men tredubblar landing-zone-arbetet. Kriterier för att gå från C till B (en subscription) eller D (tre subscriptions) finns i avsnittet om arkitekturalternativ.
 
-**Okänt eller overifierat** är markerat i texten: dbt (data build tool)-jobbtypens dokumentation gick inte att hämta, och licensiering av F64 (Fabric-kapacitet, nivå 64) för 400 läsare behöver bekräftas med Microsoft eller återförsäljare.
 
 ## Grundläggande designbeslut
 
