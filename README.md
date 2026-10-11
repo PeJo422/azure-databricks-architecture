@@ -10,3 +10,4 @@ Arkitektur för en dataplattform på Azure med Databricks, dbt (data build tool)
 | [`referensdata-flode.svg`](referensdata-flode.svg) | Flöde för referensdata: Excel-filer från SharePoint testas i containern `test`, körs genom dbt i test och publiceras till `prod` efter godkännande av dataägaren |
 | [`referensdata-flode.drawio`](referensdata-flode.drawio) | Samma flöde som redigerbar draw.io-fil |
 | [`datatyper-och-scheman.md`](datatyper-och-scheman.md) | Referensdata, masterdata, xref och andra datatyper: var de ligger i Unity Catalog, namnstandard, tester och hur referensdataflödet använder strukturen |
+| [`dataplan-2027.md`](dataplan-2027.md) | Plan för 2027: värdeområden, frågor och beslut, AI, självbetjäning, färdplan per kvartal och beslut för ledningen |
