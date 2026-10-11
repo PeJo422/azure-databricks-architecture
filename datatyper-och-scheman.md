@@ -47,6 +47,7 @@ ADF (Azure Data Factory) läser Excel-filen in i `{miljö}_raw` och lämnar den 
   ├── staging           stg_   typade och rensade källdata, inklusive referensdata från raw
   ├── ref               ref_   referensdata, affärsmappningar och hierarkier
   ├── xref              xref_  korsreferenser mellan system
+  ├── integration       ent_   en rad per verklig entitet, förenad från flera källsystem
   ├── intermediate      int_   mellansteg i transformationerna
   └── marts             dim_ och fct_   det Power BI (Business intelligence) läser
 
@@ -61,7 +62,7 @@ Rättigheter per schema:
 | Schema | Skriver | Läser |
 | --- | --- | --- |
 | `raw.referensdata` | ADF-pipelinens service principal | dbt-jobbets service principal |
-| `staging`, `ref`, `xref`, `intermediate` | dbt-jobbets service principal | BI-teamet (Business intelligence) för felsökning |
+| `staging`, `ref`, `xref`, `integration`, `intermediate` | dbt-jobbets service principal | BI-teamet (Business intelligence) för felsökning |
 | `marts` | dbt-jobbets service principal | Analytiker och Power BI-modeller |
 
 ## 4. Namnstandard
@@ -76,6 +77,7 @@ Standarden följer dbt:s och Kimballs vanliga konventioner.
 | Staging | `stg_{källa}__{entitet}` (två understreck) | `stg_referensdata__queue_cost_center` |
 | Referensdata, mappning, hierarki | `ref_{entitet}` | `ref_fuel_type`, `ref_queue_cost_center` |
 | Korsreferens | `xref_{entitet}` | `xref_cost_center`, `xref_customer` |
+| Entitet | `ent_{entitet}` | `ent_vehicle` |
 | Dimension | `dim_{entitet}` | `dim_cost_center` |
 | Fakta | `fct_{händelse}` | `fct_calls` |
 
@@ -93,7 +95,7 @@ Bedömning: namn på objekt och kolumner skrivs på engelska, och dokumentation 
 
 ### Surrogatnycklar
 
-Nycklar skapas deterministiskt med `dbt_utils.generate_surrogate_key` från affärskoden. Identity-kolumner i Delta ger olika nycklar i utveckling, test och produktion för samma rad, vilket gör att xref-tabeller och tester inte går att jämföra mellan miljöerna. Bedömning.
+Entiteter med stabil affärskod (kostnadsställe, artikel) får nyckeln deterministiskt med `dbt_utils.generate_surrogate_key` från affärskoden. Identity-kolumner i Delta ger olika nycklar i utveckling, test och produktion för samma rad, vilket gör att xref-tabeller och tester inte går att jämföra mellan miljöerna. Entiteter som matchas mellan källsystem (fordon, kund) får nyckeln när entiteten först identifieras, och nyckeln sparas i `xref` och ändras inte därefter. Det beskrivs i [`datamodellering.md`](datamodellering.md). Bedömning.
 
 ### Giltighetsperioder
 
@@ -181,7 +183,7 @@ Varningen går till dataägaren som en lista över köer som saknar mappning.
 3. Schemat avgörs av vad objektet är. Ursprunget avgör bara hur det laddas.
 4. Genererade xref-tabeller byggs av dbt. Bara små undantagsfiler underhålls manuellt.
 5. Verksamheten anger `valid_from`. dbt räknar ut `valid_to`.
-6. Surrogatnycklar skapas deterministiskt från affärskoden.
+6. Surrogatnycklar skapas deterministiskt från affärskoden för entiteter med stabil kod, och sparas vid första identifiering för entiteter som matchas mellan källsystem.
 7. Strukturkontroller ligger i Azure Function och innehållskontroller i dbt.
 8. Bara `marts` speglas till Fabric.
 
