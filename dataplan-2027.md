@@ -4,17 +4,17 @@
 
 Dokumentet beskriver vad dataplattformen ska användas till när målarkitekturen ([`malarkitektur.md`](malarkitektur.md)) är på plats. Det är ett förslag till ledningen. Det tar upp vilka frågor koncernen ska kunna besvara, vilka beslut svaren ska leda till, hur AI (artificiell intelligens) och självbetjäning används och i vilken ordning arbetet görs under 2027.
 
-Planen utgår från en bilhandelskoncern med flera bolag, nybils- och begagnatförsäljning, finansiering, verkstad, delar och däck.
+Planen är skriven för en bilhandelskoncern med flera bolag och affärsområdena nybil, begagnat, finansiering, verkstad, delar och däck. Den kan användas som mall och anpassas efter hur den egna koncernen är organiserad.
 
-## Utgångsläge
+## Förutsättningar
 
-- Rapporterna i Power BI (Business intelligence) beskriver vad som har hänt. De används sällan för att fatta beslut, och det finns knappt någon gemensam resultaträkning för koncernen.
-- Bolagen har ingen gemensam kontoplan. Konton mappas för hand, vilket gör jämförelser mellan bolag osäkra.
-- Kunddata från CRM (Customer relationship management)-systemet finns inte i dataplattformen, så kundens hela affär med koncernen går inte att följa.
-- Ett fordon följs mellan försäljning och verkstad i första hand via registreringsnummer. VIN (Vehicle identification number, chassinummer) finns centralt men används inte konsekvent.
-- Organisationen efterfrågar AI (artificiell intelligens) utan att ha bestämt vad den ska användas till.
+Planen ger effekt när följande är på plats. Varje punkt är en leverans i färdplanen.
 
-Det sista är det enklaste att lösa. AI (artificiell intelligens) ger värde när den svarar på en fråga som någon redan vill ha svar på, och den svarar bara rätt om datan under den är testad.
+- Nyckeltal har samma definition i alla bolag och alla verktyg.
+- Konton från bolagens bokföring mappas till en gemensam rapportstruktur, så att resultat kan jämföras mellan bolag.
+- Kunddata från CRM (Customer relationship management)-systemet finns i dataplattformen, så att kundens hela affär med koncernen kan följas.
+- Ett fordon kan följas från försäljning till verkstad genom att registreringsnummer och VIN (Vehicle identification number, chassinummer) kopplas ihop.
+- AI (artificiell intelligens) används för frågor som verksamheten redan vill ha svar på, och bara på data som är testad.
 
 ## Vad 2027 ska leverera
 
@@ -25,17 +25,17 @@ Det sista är det enklaste att lösa. AI (artificiell intelligens) ger värde n�
 
 ## Så prioriteras områdena
 
-Ett område prioriteras efter hur mycket pengar besluten rör, hur ofta beslutet fattas och hur nära datan är att vara klar. Lagerbilar kommer först eftersom varje bil binder kapital varje dag den står, prisbeslut fattas dagligen och datan finns redan i affärssystemen.
+Ett område prioriteras efter hur mycket pengar besluten rör, hur ofta beslutet fattas och hur mycket som behöver byggas innan området ger svar. Lagerbilar kommer först eftersom varje bil binder kapital varje dag den står, prisbeslut fattas dagligen och området bygger på lager- och försäljningsdata som varje bilhandlare har.
 
 Varje område byggs hela vägen från källa till beslut innan nästa påbörjas. Fyra halvfärdiga områden ger ingen effekt. Ett färdigt område ger ett resultat som går att visa och mäta.
 
-| Område | Belopp som påverkas | Hur ofta beslut fattas | Datans mognad | Ordning |
+| Område | Belopp som påverkas | Hur ofta beslut fattas | Bygger på | Ordning |
 | --- | --- | --- | --- | --- |
-| Lagerbilar | Kapitalbindning och räntekostnad i hela bilagret | Dagligen | God | 1 |
-| Finans | Hela koncernens resultat | Månadsvis | Medel, kräver gemensam kontomappning | 2 |
-| Försäljning | Bruttovinst per affär, finansiering och tillbehör | Dagligen | God | 3 |
-| Eftermarknad | Verkstadens och delarnas marginal, kundlojalitet | Veckovis | Medel, kräver fordonskoppling | 4 |
-| Kund tvärs över bolagen | Kundens livstidsvärde | Kvartalsvis | Låg, kräver CRM (Customer relationship management)-data | 5 |
+| Lagerbilar | Kapitalbindning och räntekostnad i hela bilagret | Dagligen | Lager- och försäljningsdata | 1 |
+| Finans | Hela koncernens resultat | Månadsvis | Gemensam kontomappning | 2 |
+| Försäljning | Bruttovinst per affär, finansiering och tillbehör | Dagligen | Affärs- och försäljningsdata | 3 |
+| Eftermarknad | Verkstadens och delarnas marginal, kundlojalitet | Veckovis | Koppling av fordon mellan försäljning och verkstad | 4 |
+| Kund tvärs över bolagen | Kundens livstidsvärde | Kvartalsvis | CRM (Customer relationship management)-data och en gemensam kunddimension | 5 |
 
 ## Värdeområden
 
@@ -188,7 +188,7 @@ Självbetjäning kräver datakvalitet. Copilot svarar säkert även när datan u
 | --- | --- | --- |
 | **Kvartal 1** | Plattformen i drift i produktion. Lagerbilar byggt från källa till rapport för ett pilotbolag. Katalog över nyckeltal med definitioner. Referensdataflödet i drift. Copilot på en godkänd semantisk modell | Daglig ståtidsrapport för pilotbolaget med räntekostnad per bil |
 | **Kvartal 2** | Lagerbilar för alla bolag. Gemensam kontomappning och resultaträkning för koncernen. Genie-pilot för controllers | Ståtid och resultat jämförbart mellan alla bolag |
-| **Kvartal 3** | Försäljning och eftermarknad. Koppling mellan registreringsnummer och VIN (Vehicle identification number, chassinummer). CRM (Customer relationship management)-data in i plattformen. Prognos för ståtid i drift. Pilot med Claude Dashboards | Varje platschef får en daglig lista över bilar som behöver åtgärdas |
+| **Kvartal 3** | Försäljning och eftermarknad. Koppling mellan registreringsnummer och VIN (Vehicle identification number, chassinummer). Kunddata från CRM (Customer relationship management) ansluten till plattformen. Prognos för ståtid i drift. Pilot med Claude Dashboards | Varje platschef får en daglig lista över bilar som behöver åtgärdas |
 | **Kvartal 4** | Prisförslag per bil. Modell för kunder som riskerar att lämna verkstaden. Kunddimension tvärs över bolagen. Utvärdering av året | Mätt effekt på ståtid och servicelojalitet jämfört med januari 2027 |
 
 ## Beslut som ledningen behöver fatta
@@ -198,7 +198,7 @@ Självbetjäning kräver datakvalitet. Copilot svarar säkert även när datan u
 3. **Utse en dataägare per område** i verksamheten: en person som äger definitionerna, godkänner referensdata och använder resultatet. Utan ägare blir det rapporter som ingen använder.
 4. **Välja pilotbolag** för lagerbilar.
 5. **Fastställa definitionerna av de första nyckeltalen**, till exempel från vilket datum ståtid räknas och vad som ingår i bruttovinst per bil.
-6. **Ge plattformen tillgång till CRM (Customer relationship management)-data** och besluta vem som äger kunddata i plattformen.
+6. **Besluta om åtkomst och ägarskap för kunddata** från CRM (Customer relationship management) i plattformen.
 7. **Budget för licenser:** Fabric-kapacitet för Copilot, Genie efter 31 januari 2027 och Claude Team eller Enterprise för piloten.
 
 ## Risker och hur de hanteras

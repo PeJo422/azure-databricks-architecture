@@ -115,7 +115,7 @@ Gäller målarkitekturen med alternativ C: två subscriptions, tre workspaces, e
 - Läs Databricks dokumentation om Unity Catalog best practices innan ni sätter behörigheter.
 
 ### Don't
-- Flytta inte allt från SQL Server på en gång.
+- Flytta inte alla befintliga datalager och rapporter på en gång. Flytta ett område i taget.
 - Bygg inte egna lösningar för sådant Unity Catalog redan gör, som lineage, åtkomstloggar och dataklassning.
 
 ---
