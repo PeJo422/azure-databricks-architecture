@@ -13,3 +13,4 @@ Arkitektur för en dataplattform på Azure med Databricks, dbt (data build tool)
 | [`dataplan-2027.md`](dataplan-2027.md) | Plan för 2027: värdeområden, frågor och beslut, AI, självbetjäning, färdplan per kvartal och beslut för ledningen |
 | [`migreringsplan.md`](migreringsplan.md) | Migrering från befintliga SQL-modeller: tre högar, faser, avstämning mot facit, rapporter, stoppregler, roller och risker |
 | [`datamodellering.md`](datamodellering.md) | Datamodellering enligt Kimball med integrationslager: lager, entiteter, nycklar, matchning, historik, faktatabeller och tester |
+| [`film/`](film/) | Animerad film med musik och ljudeffekter om vad arkitekturen är och vad den ger: HTML-sida, MP4 och källkod |
