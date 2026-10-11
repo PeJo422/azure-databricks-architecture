@@ -25,7 +25,7 @@ Alternativ C är det minsta upplägg där produktion har en gräns som inte går
 
 Skillnaden mot D är att test får egen RBAC (Role-based access control) och policy. Det kräver en delad plattformssubscription och ett extra nätverk, och behövs inte så länge utvecklare saknar skrivrättigheter på test och bara pipelinens service principal deployar dit. Förslaget ändras till D om test måste ha samma nätverkspolicy som produktion, om olika team ska äga utveckling och test, eller om en revisor kräver att test inte delar RBAC (Role-based access control) med utveckling. Det ändras till B om teamet och volymen är så små att en andra subscription kostar mer i hantering än den ger i skydd.
 
-Valet av C är en bedömning. Det bygger på dokumentationens krav på separata workspaces för produktion och på att flera workspaces sätts upp med automatisering.
+Valet av C bygger på två delar. Tre workspaces (utveckling, test och produktion) och automatisering med Terraform följer Databricks och Microsofts rekommendationer: SDLC (Software development life cycle)-miljöer delas upp i separata workspaces, produktion är ett eget workspace, och uppsättning och underhåll av flera workspaces ska vara fullt automatiserade. Uppdelningen i två subscriptions är en bedömning. Dokumentationen rekommenderar varken en eller flera subscriptions per miljö. Microsofts vägledning för Azure landing zones beskriver subscriptionen som en gräns för policy och förvaltning och varnar för en stel subscriptionsmodell, men föreskriver ingen uppdelning. Alternativ B (en subscription, tre workspaces) följer rekommendationerna fullt ut. C väljs för att produktion då får en gräns i Azure som ingen i ett utvecklingsworkspace kan ändra.
 
 ## Sammanfattning
 
@@ -328,6 +328,7 @@ Sidorna nedan öppnades och lästes den 10 oktober 2026. Dokumentationen ändras
 - [Workspace-catalog binding](https://learn.microsoft.com/en-us/azure/databricks/catalogs/binding)
 - [Create a Unity Catalog metastore](https://learn.microsoft.com/en-us/azure/databricks/data-governance/unity-catalog/create-metastore)
 - [Phase 2: Design workspace strategy](https://learn.microsoft.com/en-in/Azure/databricks/lakehouse-architecture/deployment-guide/workspace-strategy)
+- [Subscription design i Azure landing zones](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/design-area/resource-org-subscriptions)
 - [Storage credentials with an access connector](https://learn.microsoft.com/en-us/azure/databricks/connect/unity-catalog/cloud-storage/azure-managed-identities)
 - [Azure Databricks pricing](https://azure.microsoft.com/en-us/pricing/details/databricks/)
 
